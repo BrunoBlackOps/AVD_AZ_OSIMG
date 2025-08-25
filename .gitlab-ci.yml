@@ -1,0 +1,45 @@
+---
+workflow:
+  rules:
+    # Merge request pipelines
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "qa"
+      variables:
+        TF_ENVIRONMENT: "qa"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "uat"
+      variables:
+        TF_ENVIRONMENT: "uat"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"
+      variables:
+        TF_ENVIRONMENT: "prod"
+    # Webhook (approval) triggered pipelines.
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $action == "approved" && $detailed_merge_status == "mergeable"
+
+stages:
+  - validate
+  - plan
+  - apply
+  - merge
+
+variables:
+  TF_CLI_CONFIG_FILE: "$CI_PROJECT_DIR/.terraformrc"
+  TF_ENVIRONMENT:
+    value: "qa"
+    options:
+      - "qa"
+      - "uat"
+      - "prod"
+    description: "Target environment for Azure deployment"
+  TF_REGION:
+    value: ""
+    options:
+      - "eastus2"
+      - "centralus"
+      - ""
+    description: "Target Region for Azure deployment"
+  TF_BACKEND_PATH: "environment/$TF_ENVIRONMENT/$TF_REGION/backend.hcl"
+  TF_VARIABLES_PATH: "environment/$TF_ENVIRONMENT/$TF_REGION/variables.tf"
+  ARM_USE_AZUREAD: "true"
+  AZURE_STORAGE_AUTH_MODE: "login"
+
+include:
+  - component: $CI_SERVER_FQDN/azure-infrastructure/azure-ci/azure-ci-base@master
