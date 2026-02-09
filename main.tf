@@ -255,7 +255,7 @@ resource "azapi_resource" "aib_template" {
           runOutputName      = "aib-qa-run"
           galleryImageId     = data.azurerm_shared_image.win11_def.id
           replicationRegions = ["eastus2"]
-          excludeFromLatest  = false  # <--- Place it here
+          excludeFromLatest  = false  
           artifactTags       = { BuildBy = "AIB", Environment = "QA" }
         }
       ]

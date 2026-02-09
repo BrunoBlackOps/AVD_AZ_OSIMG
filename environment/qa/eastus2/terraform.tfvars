@@ -1,7 +1,6 @@
 subscription_id = "ce2696e6-e6a1-4ef4-8c4c-b5136fd91316"
 tenant_id       = "7abd04ef-837d-48e6-9ba8-69d84f65a110"
 location        = "eastus2"
-
 compute_gallery_rg_name = "qa-eastus2-avd-compute-rg"
 compute_gallery_name    = "ibavdcomputegallery"
 managed_identity_name   = "mgmid-aib-image-builder-qa"
