@@ -1,24 +1,3 @@
-variable "subscription_id" { type = string }
-variable "tenant_id" { type = string }
-variable "location" { type = string }
-
-variable "compute_gallery_rg_name" { type = string }
-variable "compute_gallery_name" { type = string }
-variable "image_definition_name" { type = string }
-variable "managed_identity_name" { type = string }
-variable "staging_rg_name" { type = string }
-
-variable "source_publisher" { type = string }
-variable "source_offer" { type = string }
-variable "source_sku" { type = string }
-
-variable "aib_vm_size" { type = string }
-variable "build_timeout_in_minutes" { type = number }
-variable "subnet_id" { type = string }
-variable "replication_regions" { type = list(string) }
-variable "force_rebuild_id" { type = string }
-variable "tags" { type = map(string) }
-
 subscription_id = "ce2696e6-e6a1-4ef4-8c4c-b5136fd91316"
 tenant_id       = "7abd04ef-837d-48e6-9ba8-69d84f65a110"
 location        = "eastus2"
