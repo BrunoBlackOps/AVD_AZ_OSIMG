@@ -7,9 +7,9 @@ terraform {
     key                  = "aib.tfstate"
   }*/
   required_providers {
-    azurerm = { source = "hashicorp/azurerm", version = "~> 4.39.0" }
-    azapi   = { source = "azure/azapi", version = ">= 2.3.0" }
-    random  = { source = "hashicorp/random", version = "~> 3.5.1" }
+    azurerm = { source = "hashicorp/azurerm" }
+    azapi   = { source = "azure/azapi"}
+    random  = { source = "hashicorp/random"}
   }
 }
 
