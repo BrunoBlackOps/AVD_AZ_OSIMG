@@ -33,7 +33,7 @@ resource "azapi_resource" "aib_template" {
   type      = "Microsoft.VirtualMachineImages/imageTemplates@2024-02-01"
   
   # Dynamic Name: Aib + Location + Environment + Date
-  name      = "Aib${var.location}${var.environment}${local.current_date}"
+  name      = "${var.environment}-${var.location}-aib-${local.current_date}"
   parent_id = data.azurerm_resource_group.staging_rg.id 
   location  = var.location
   tags      = var.tags
