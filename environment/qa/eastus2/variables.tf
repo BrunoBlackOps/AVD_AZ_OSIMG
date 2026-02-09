@@ -4,7 +4,7 @@ location        = "eastus2"
 compute_gallery_rg_name = "qa-eastus2-avd-compute-rg"
 compute_gallery_name    = "ibavdcomputegallery"
 managed_identity_name   = "mgmid-aib-image-builder-qa"
-staging_rg_name         = "qa2-eastus2-avd-compute-rg" 
+staging_rg_name         = "qa-eastus2-aib-staging-rg" 
 image_definition_name   = "prod-win11-avd-25h2"
 
 source_publisher = "microsoftwindowsdesktop"
