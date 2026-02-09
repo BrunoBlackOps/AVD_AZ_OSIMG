@@ -18,3 +18,4 @@ variable "subnet_id" { type = string }
 variable "replication_regions" { type = list(string) }
 variable "force_rebuild_id" { type = string }
 variable "tags" { type = map(string) }
+variable "environment" { type = string }

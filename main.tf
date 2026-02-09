@@ -24,10 +24,16 @@ resource "random_id" "aib_run_trigger" {
   keepers     = { key = coalesce(var.force_rebuild_id, "initial") }
 }
 
+# Create a local for the timestamp to ensure it's consistent across the plan
+locals {
+  current_date = formatdate("YYYYMMDD", timestamp())
+}
+
 resource "azapi_resource" "aib_template" {
   type      = "Microsoft.VirtualMachineImages/imageTemplates@2024-02-01"
-  name      = "Aib2026v5GitLab"
-  # This points to qa2-eastus2-avd-compute-rg via the data source
+  
+  # Dynamic Name: Aib + Location + Environment + Date
+  name      = "Aib${var.location}${var.environment}${local.current_date}"
   parent_id = data.azurerm_resource_group.staging_rg.id 
   location  = var.location
   tags      = var.tags
