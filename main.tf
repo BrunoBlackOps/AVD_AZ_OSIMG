@@ -1,24 +1,3 @@
-terraform {
-  required_version = ">= 1.6.0"
- /* backend "azurerm" {
-    resource_group_name  = "qa-eastus2-avd-artifacts-storage-rg"
-    storage_account_name = "stquea2avdartifacts"
-    container_name       = "avdartifacts-blob-container"
-    key                  = "aib.tfstate"
-  }*/
-  required_providers {
-    azurerm = { source = "hashicorp/azurerm" }
-    azapi   = { source = "azure/azapi"}
-    random  = { source = "hashicorp/random"}
-  }
-}
-
-provider "azurerm" {
-  features {}
-  subscription_id = var.subscription_id
-  tenant_id       = var.tenant_id
-}
-
 # Data Sources
 data "azurerm_resource_group" "compute_gallery_rg" {
   name = var.compute_gallery_rg_name

@@ -15,7 +15,7 @@ aib_vm_size              = "Standard_D4as_v5"
 build_timeout_in_minutes = 280
 
 subnet_id = "/subscriptions/ce2696e6-e6a1-4ef4-8c4c-b5136fd91316/resourceGroups/qa-eastus2-avd-vnet-rg/providers/Microsoft.Network/virtualNetworks/qa-eastus2-avd-vnet/subnets/qa-eastus2-avd-aib-pool-snet"
-environment = "qa"
+
 replication_regions = ["eastus2"]
 force_rebuild_id    = "2026020501"
 
@@ -23,4 +23,3 @@ tags = {
   AVD_IMAGE_TEMPLATE = "AVD_IMAGE_TEMPLATE"
   Environment        = "QA"
 }
-
