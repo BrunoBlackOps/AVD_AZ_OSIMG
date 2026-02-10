@@ -1,4 +1,10 @@
-# Data Sources
+# --- Data Sources ---
+data "azurerm_subnet" "aib_subnet" {
+  name                 = var.subnet_name
+  virtual_network_name = var.vnet_name
+  resource_group_name  = var.network_rg_name
+}
+
 data "azurerm_resource_group" "compute_gallery_rg" {
   name = var.compute_gallery_rg_name
 }
@@ -18,21 +24,19 @@ data "azurerm_shared_image" "win11_def" {
   resource_group_name = data.azurerm_resource_group.compute_gallery_rg.name
 }
 
-# Resources
+# --- Locals ---
+locals {
+  current_date = formatdate("YYYYMMDD", timestamp())
+}
+
+# --- Resources ---
 resource "random_id" "aib_run_trigger" {
   byte_length = 2
   keepers     = { key = coalesce(var.force_rebuild_id, "initial") }
 }
 
-# Create a local for the timestamp to ensure it's consistent across the plan
-locals {
-  current_date = formatdate("YYYYMMDD", timestamp())
-}
-
 resource "azapi_resource" "aib_template" {
   type      = "Microsoft.VirtualMachineImages/imageTemplates@2024-02-01"
-  
-  # Dynamic Name: Aib + Location + Environment + Date
   name      = "${var.environment}-${var.location}-aib-${local.current_date}"
   parent_id = data.azurerm_resource_group.staging_rg.id 
   location  = var.location
@@ -50,7 +54,8 @@ resource "azapi_resource" "aib_template" {
         vmSize       = var.aib_vm_size
         osDiskSizeGB = 127
         vnetConfig = {
-          subnetId = var.subnet_id
+          # Pulled dynamically from Data Source
+          subnetId = data.azurerm_subnet.aib_subnet.id
         }
       }
       source = {
@@ -239,9 +244,9 @@ resource "azapi_resource" "aib_template" {
           type               = "SharedImage"
           runOutputName      = "aib-qa-run"
           galleryImageId     = data.azurerm_shared_image.win11_def.id
-          replicationRegions = ["eastus2"]
+          replicationRegions = var.replication_regions
           excludeFromLatest  = false  
-          artifactTags       = { BuildBy = "AIB", Environment = "QA" }
+          artifactTags       = { BuildBy = "AIB", Environment = var.environment }
         }
       ]
     } 
