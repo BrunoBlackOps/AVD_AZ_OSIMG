@@ -104,8 +104,8 @@ resource "azapi_resource" "aib_template" {
             "Add-LocalGroupMember -Group 'FSLogix Profile Exclude List' -Member 'Administrators', 'S-1-5-113'",
             "Get-ChildItem 'C:\\windows\\admin\\Custom\\*.crt' | ForEach-Object { Import-Certificate -FilePath $_.FullName -CertStoreLocation 'Cert:\\LocalMachine\\Root' }",
             "$reg = @(",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System'; N='Wallpaper'; V='C:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System'; N='WallpaperStyle'; V='10'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='DesktopImageUrl'; V='C:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImage'; V='C:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
             "  @{ P='SYSTEM\\CurrentControlSet\\Services\\wuauserv'; N='Start'; V=4; T='DWord' }",
             ")",
             "foreach ($S in $reg) { $fp = 'HKLM:\\' + $S.P; if (!(Test-Path $fp)) { New-Item $fp -Force | Out-Null }; Set-ItemProperty -Path $fp -Name $S.N -Value $S.V -Type $S.T -Force }",
@@ -120,7 +120,7 @@ resource "azapi_resource" "aib_template" {
           inline = [
             "Write-Host 'Importing Intune Registry Policies...' -ForegroundColor Cyan",
             "$regFile = 'C:\\windows\\admin\\Scripts\\EASTINTUNEPolicies.reg'",
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/EASTINTUNEPolicies.reg' -OutFile $regFile -UseBasicParsing",
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/${var.environment}${var.location}allpolicies.reg' -OutFile $regFile -UseBasicParsing",
             "reg import $regFile",
             "exit 0"
           ]
