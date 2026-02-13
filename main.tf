@@ -24,6 +24,12 @@ data "azurerm_shared_image" "win11_def" {
   resource_group_name = data.azurerm_resource_group.compute_gallery_rg.name
 }
 
+data "azurerm_platform_image" "source" {
+  location  = var.location
+  publisher = var.source_publisher
+  offer     = var.source_offer
+  sku       = var.source_sku
+}
 # --- Locals ---
 locals {
   current_date = formatdate("YYYYMMDD", timestamp())
@@ -75,9 +81,9 @@ resource "azapi_resource" "aib_template" {
           runAsSystem = true
           inline = [
             "$ErrorActionPreference = 'Stop'",
-            "New-Item -ItemType Directory -Path C:\\Windows\\admin\\Scripts -Force | Out-Null",
-            "New-Item -ItemType Directory -Path C:\\Windows\\admin\\Custom -Force | Out-Null",
-            "New-Item -ItemType Directory -Path C:\\Windows\\admin\\Logs -Force | Out-Null"
+            "New-Item -ItemType Directory -Path C:\\Users\\Public\\admin\\Scripts -Force | Out-Null",
+            "New-Item -ItemType Directory -Path C:\\Users\\Public\\admin\\Custom -Force | Out-Null",
+            "New-Item -ItemType Directory -Path C:\\Users\\Public\\admin\\Logs -Force | Out-Null"
           ]
         },
         {
@@ -87,8 +93,8 @@ resource "azapi_resource" "aib_template" {
           runAsSystem = true
           inline = [
             "Write-Host 'Downloading Custom.zip from Nexus...' -ForegroundColor Cyan",
-            "$destDir = 'C:\\windows\\admin\\Custom'",
-            "$zipFile = 'C:\\windows\\admin\\Custom\\Custom.zip'",
+            "$destDir = 'C:\\Users\\Public\\admin\\Custom'",
+            "$zipFile = 'C:\\Users\\Public\\admin\\Custom\\Custom.zip'",
             "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/Custom.zip' -OutFile $zipFile -UseBasicParsing",
             "Write-Host 'Extracting files...' -ForegroundColor Cyan",
             "Expand-Archive -Path $zipFile -DestinationPath $destDir -Force",
@@ -104,11 +110,11 @@ resource "azapi_resource" "aib_template" {
             "Write-Host 'Applying Master Image configurations...' -ForegroundColor Cyan",
             "$ErrorActionPreference = 'SilentlyContinue'",
             "Add-LocalGroupMember -Group 'FSLogix Profile Exclude List' -Member 'Administrators', 'S-1-5-113'",
-            "Get-ChildItem 'C:\\windows\\admin\\Custom\\*.crt' | ForEach-Object { Import-Certificate -FilePath $_.FullName -CertStoreLocation 'Cert:\\LocalMachine\\Root' }",
+            "Get-ChildItem 'C:\\Users\\Public\\admin\\Custom\\*.crt' | ForEach-Object { Import-Certificate -FilePath $_.FullName -CertStoreLocation 'Cert:\\LocalMachine\\Root' }",
             "$reg = @(",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='DesktopImageUrl'; V='c:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImageUrl'; V='c:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImage'; V='c:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='DesktopImageUrl'; V='C:\\Users\\Public\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImageUrl'; V='C:\\Users\\Public\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImage'; V='C:\\Users\\Public\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
             "  @{ P='SYSTEM\\CurrentControlSet\\Services\\wuauserv'; N='Start'; V=4; T='DWord' }",
             ")",
             "foreach ($S in $reg) { $fp = 'HKLM:\\' + $S.P; if (!(Test-Path $fp)) { New-Item $fp -Force | Out-Null }; Set-ItemProperty -Path $fp -Name $S.N -Value $S.V -Type $S.T -Force }",
@@ -122,7 +128,7 @@ resource "azapi_resource" "aib_template" {
           runAsSystem = true
           inline = [
             "Write-Host 'Importing Intune Registry Policies...' -ForegroundColor Cyan",
-            "$regFile = 'C:\\windows\\admin\\Scripts\\EASTINTUNEPolicies.reg'",
+            "$regFile = 'C:\\Users\\Public\\admin\\Scripts\\EASTINTUNEPolicies.reg'",
             "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/${var.environment}${var.location}allpolicies.reg' -OutFile $regFile -UseBasicParsing",
             "reg import $regFile",
             "exit 0"
@@ -134,8 +140,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/FSLogixKerberos.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\FSLogixKerberos.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\FSLogixKerberos.ps1'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/FSLogixKerberos.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\FSLogixKerberos.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\FSLogixKerberos.ps1'; exit 0"
           ]
         },
         {
@@ -144,8 +150,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/MissingConfigs.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\MissingConfigs.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\MissingConfigs.ps1'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/MissingConfigs.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\MissingConfigs.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\MissingConfigs.ps1'; exit 0"
           ]
         },
         {
@@ -154,8 +160,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/DisableStorageSense.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\DisableStorageSense.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\DisableStorageSense.ps1'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/DisableStorageSense.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\DisableStorageSense.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\DisableStorageSense.ps1'; exit 0"
           ]
         },
         {
@@ -164,8 +170,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/TimezoneRedirection.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\TimezoneRedirection.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\TimezoneRedirection.ps1'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/TimezoneRedirection.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\TimezoneRedirection.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\TimezoneRedirection.ps1'; exit 0"
           ]
         },
         {
@@ -174,8 +180,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/RDPShortpath.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\RDPShortpath.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\RDPShortpath.ps1'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/RDPShortpath.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\RDPShortpath.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\RDPShortpath.ps1'; exit 0"
           ]
         },
         {
@@ -184,8 +190,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/ConfigureSessionTimeoutsV2.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\ConfigureSessionTimeouts.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\ConfigureSessionTimeouts.ps1' -ArgumentList '-MaxDisconnectionTime 15 -MaxIdleTime 360 -MaxConnectionTime 960 -RemoteAppLogoffTimeLimit 360'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/ConfigureSessionTimeoutsV2.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\ConfigureSessionTimeouts.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\ConfigureSessionTimeouts.ps1' -ArgumentList '-MaxDisconnectionTime 15 -MaxIdleTime 360 -MaxConnectionTime 960 -RemoteAppLogoffTimeLimit 360'; exit 0"
           ]
         },
         {
@@ -193,14 +199,14 @@ resource "azapi_resource" "aib_template" {
           name        = "EnforceUDPShortPath"
           runElevated = true
           runAsSystem = true
-          inline      = ["C:\\windows\\admin\\Custom\\EnforceUDPShortPath.ps1"]
+          inline      = ["C:\\Users\\Public\\admin\\Custom\\EnforceUDPShortPath.ps1"]
         },
         {
           type        = "PowerShell"
           name        = "WindowsOptimization"
           runElevated = true
           runAsSystem = true
-          inline      = ["C:\\windows\\admin\\Custom\\WindowsOptimization.ps1 -Optimizations \"RemoveOneDrive\",\"Edge\",\"DiskCleanup\",\"LGPO\",\"NetworkOptimizations\",\"Services\",\"Autologgers\",\"DefaultUserSettings\",\"ScheduledTasks\""]
+          inline      = ["C:\\Users\\Public\\admin\\Custom\\WindowsOptimization.ps1 -Optimizations \"RemoveOneDrive\",\"Edge\",\"DiskCleanup\",\"LGPO\",\"NetworkOptimizations\",\"Services\",\"Autologgers\",\"DefaultUserSettings\",\"ScheduledTasks\""]
         },
         {
           type           = "WindowsRestart"
@@ -213,8 +219,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/DisableAutoUpdates.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\DisableAutoUpdates.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\DisableAutoUpdates.ps1'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/DisableAutoUpdates.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\DisableAutoUpdates.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\DisableAutoUpdates.ps1'; exit 0"
           ]
         },
         {
@@ -222,7 +228,7 @@ resource "azapi_resource" "aib_template" {
           name        = "RemoveAppxPackages"
           runElevated = true
           runAsSystem = true
-          inline      = ["C:\\windows\\admin\\Custom\\removeAppxPackages.ps1 -AppxPackages \"Clipchamp.Clipchamp\",\"Microsoft.BingNews\",\"Microsoft.BingWeather\",\"Microsoft.GamingApp\",\"Microsoft.GetHelp\",\"Microsoft.MicrosoftSolitaireCollection\",\"Microsoft.Getstarted\",\"Microsoft.MicrosoftOfficeHub\",\"Microsoft.People\",\"Microsoft.SkypeApp\",\"Microsoft.WindowsFeedbackHub\",\"Microsoft.windowscommunicationsapps\",\"Microsoft.WindowsMaps\",\"Microsoft.XboxGameOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.YourPhone\",\"Microsoft.ZuneMusic\",\"Microsoft.OutlookForWindows\",\"Microsoft.ZuneVideo\",\"MSTeams\",\"Microsoft.XboxApp\""]
+          inline      = ["C:\\Users\\Public\\admin\\Custom\\removeAppxPackages.ps1 -AppxPackages \"Clipchamp.Clipchamp\",\"Microsoft.BingNews\",\"Microsoft.BingWeather\",\"Microsoft.GamingApp\",\"Microsoft.GetHelp\",\"Microsoft.MicrosoftSolitaireCollection\",\"Microsoft.Getstarted\",\"Microsoft.MicrosoftOfficeHub\",\"Microsoft.People\",\"Microsoft.SkypeApp\",\"Microsoft.WindowsFeedbackHub\",\"Microsoft.windowscommunicationsapps\",\"Microsoft.WindowsMaps\",\"Microsoft.XboxGameOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.YourPhone\",\"Microsoft.ZuneMusic\",\"Microsoft.OutlookForWindows\",\"Microsoft.ZuneVideo\",\"MSTeams\",\"Microsoft.XboxApp\""]
         },
         {
           type        = "PowerShell"
@@ -237,8 +243,8 @@ resource "azapi_resource" "aib_template" {
           runElevated = true
           runAsSystem = true
           inline = [
-            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/AdminSysPrep.ps1' -OutFile 'C:\\Windows\\admin\\Scripts\\AdminSysPrep.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Windows\\admin\\Scripts\\AdminSysPrep.ps1'; exit 0"
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/AdminSysPrep.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\AdminSysPrep.ps1' -UseBasicParsing",
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\AdminSysPrep.ps1'; exit 0"
           ]
         }
       ]
@@ -249,7 +255,7 @@ resource "azapi_resource" "aib_template" {
           galleryImageId     = data.azurerm_shared_image.win11_def.id
           replicationRegions = var.replication_regions
           excludeFromLatest  = false  
-          artifactTags       = { BuildBy = "AIB", Environment = var.environment }
+          artifactTags       = { BuildBy = "AIB", Environment = var.environment, BaseImageVersion = data.azurerm_platform_image.source.version }
         }
       ]
     } 
