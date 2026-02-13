@@ -27,6 +27,8 @@ data "azurerm_shared_image" "win11_def" {
 # --- Locals ---
 locals {
   current_date = formatdate("YYYYMMDD", timestamp())
+  current_hour   = formatdate("HH", timestamp())
+  current_minute = formatdate("mm", timestamp())
 }
 
 # --- Resources ---
@@ -37,7 +39,7 @@ resource "random_id" "aib_run_trigger" {
 
 resource "azapi_resource" "aib_template" {
   type      = "Microsoft.VirtualMachineImages/imageTemplates@2024-02-01"
-  name      = "${var.environment}-${var.location}-aib-${local.current_date}"
+  name      = "${var.environment}-${var.location}-aib-${local.current_date}${local.current_hour}${local.current_minute}"
   parent_id = data.azurerm_resource_group.staging_rg.id 
   location  = var.location
   tags      = var.tags
@@ -104,8 +106,9 @@ resource "azapi_resource" "aib_template" {
             "Add-LocalGroupMember -Group 'FSLogix Profile Exclude List' -Member 'Administrators', 'S-1-5-113'",
             "Get-ChildItem 'C:\\windows\\admin\\Custom\\*.crt' | ForEach-Object { Import-Certificate -FilePath $_.FullName -CertStoreLocation 'Cert:\\LocalMachine\\Root' }",
             "$reg = @(",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='DesktopImageUrl'; V='C:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImage'; V='C:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='DesktopImageUrl'; V='c:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImageUrl'; V='c:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
+            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImage'; V='c:\\windows\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
             "  @{ P='SYSTEM\\CurrentControlSet\\Services\\wuauserv'; N='Start'; V=4; T='DWord' }",
             ")",
             "foreach ($S in $reg) { $fp = 'HKLM:\\' + $S.P; if (!(Test-Path $fp)) { New-Item $fp -Force | Out-Null }; Set-ItemProperty -Path $fp -Name $S.N -Value $S.V -Type $S.T -Force }",
@@ -219,7 +222,7 @@ resource "azapi_resource" "aib_template" {
           name        = "RemoveAppxPackages"
           runElevated = true
           runAsSystem = true
-          inline      = ["C:\\windows\\admin\\Custom\\removeAppxPackages.ps1 -AppxPackages \"Clipchamp.Clipchamp\",\"Microsoft.BingNews\",\"Microsoft.BingWeather\",\"Microsoft.GamingApp\",\"Microsoft.GetHelp\",\"Microsoft.MicrosoftSolitaireCollection\",\"Microsoft.Getstarted\",\"Microsoft.MicrosoftOfficeHub\",\"Microsoft.People\",\"Microsoft.SkypeApp\",\"Microsoft.WindowsFeedbackHub\",\"Microsoft.windowscommunicationsapps\",\"Microsoft.WindowsMaps\",\"Microsoft.XboxGameOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.YourPhone\",\"Microsoft.ZuneMusic\",\"Microsoft.ZuneVideo\",\"Microsoft.XboxApp\""]
+          inline      = ["C:\\windows\\admin\\Custom\\removeAppxPackages.ps1 -AppxPackages \"Clipchamp.Clipchamp\",\"Microsoft.BingNews\",\"Microsoft.BingWeather\",\"Microsoft.GamingApp\",\"Microsoft.GetHelp\",\"Microsoft.MicrosoftSolitaireCollection\",\"Microsoft.Getstarted\",\"Microsoft.MicrosoftOfficeHub\",\"Microsoft.People\",\"Microsoft.SkypeApp\",\"Microsoft.WindowsFeedbackHub\",\"Microsoft.windowscommunicationsapps\",\"Microsoft.WindowsMaps\",\"Microsoft.XboxGameOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.YourPhone\",\"Microsoft.ZuneMusic\",\"Microsoft.OutlookForWindows\",\"Microsoft.ZuneVideo\",\"MSTeams\",\"Microsoft.XboxApp\""]
         },
         {
           type        = "PowerShell"
