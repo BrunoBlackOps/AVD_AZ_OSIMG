@@ -128,7 +128,7 @@ resource "azapi_resource" "aib_template" {
           runAsSystem = true
           inline = [
             "Write-Host 'Importing Intune Registry Policies...' -ForegroundColor Cyan",
-            "$regFile = 'C:\\Users\\Public\\admin\\Scripts\\EASTINTUNEPolicies.reg'",
+            "$regFile = 'C:\\Users\\Public\\admin\\Scripts\\NEWINTUNEPolicies.reg'",
             "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/${var.environment}${var.location}allpolicies.reg' -OutFile $regFile -UseBasicParsing",
             "reg import $regFile",
             "exit 0"
