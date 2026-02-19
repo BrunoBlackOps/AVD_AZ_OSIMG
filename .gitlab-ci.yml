@@ -40,6 +40,8 @@ variables:
   TF_VARIABLES_PATH: "environment/$TF_ENVIRONMENT/$TF_REGION/variables.tf"
   ARM_USE_AZUREAD: "true"
   AZURE_STORAGE_AUTH_MODE: "login"
+  TF_VAR_avd_subscription_id: $ARM_SUBSCRIPTION_ID
 
 include:
   - component: $CI_SERVER_FQDN/azure-infrastructure/azure-ci/azure-ci-base@master
+
