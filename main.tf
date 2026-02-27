@@ -166,6 +166,19 @@ resource "azapi_resource" "aib_template" {
         },
         {
           type        = "PowerShell"
+          name        = "ApplyKerberosSettings"
+          runElevated = true
+          runAsSystem = true
+          inline = [
+            "Write-Host 'Importing Kerberos and Machine RUN Policies...' -ForegroundColor Cyan",
+            "$regFile = 'C:\\Users\\Public\\admin\\Scripts\\KerberosSettings.reg'",
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/KerberosSettings.reg' -OutFile $regFile -UseBasicParsing",
+            "reg import $regFile",
+            "exit 0"
+          ]
+        },
+        {
+          type        = "PowerShell"
           name        = "TimezoneRedirection"
           runElevated = true
           runAsSystem = true
