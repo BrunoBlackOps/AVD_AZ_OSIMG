@@ -83,6 +83,7 @@ resource "azapi_resource" "aib_template" {
             "$ErrorActionPreference = 'Stop'",
             "New-Item -ItemType Directory -Path C:\\Users\\Public\\admin\\Scripts -Force | Out-Null",
             "New-Item -ItemType Directory -Path C:\\Users\\Public\\admin\\Custom -Force | Out-Null",
+            "New-Item -ItemType Directory -Path C:\\Users\\Public\\admin\\LanguagePackages -Force | Out-Null",
             "New-Item -ItemType Directory -Path C:\\Users\\Public\\admin\\Logs -Force | Out-Null"
           ]
         },
@@ -101,7 +102,58 @@ resource "azapi_resource" "aib_template" {
             "Remove-Item -Path $zipFile -Force"
           ]
         },
+       {  name        = "DownloadAndExtractLanguagePackages"
+          type        = "PowerShell"
+          runElevated = true
+          runAsSystem = true
+          inline = [
+            "$ProgressPreference = 'SilentlyContinue'",
+            "Write-Host 'Downloading LanguagePackages.zip from Nexus...' -ForegroundColor Cyan",
+            "$destDirLP = 'C:\\Users\\Public\\admin\\LanguagePackages'",
+            "$zipFileLP = 'C:\\Users\\Public\\admin\\LanguagePackages\\LanguagePackages.zip'",
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/LanguagePackages.zip' -OutFile $zipFileLP -UseBasicParsing",
+            "Write-Host 'Extracting files...' -ForegroundColor Cyan",
+            "Expand-Archive -Path $zipFileLP -DestinationPath $destDirLP -Force",
+            "Remove-Item -Path $zipFileLP -Force"
+    ]
+   }, 
+       {
+          type        = "PowerShell"
+          name        = "InstallLanguagePackages"
+          runElevated = true
+          runAsSystem = true
+          inline = [
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/LanguagePackages.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\LanguagePackages.ps1' -UseBasicParsing",
+            "C:\\Users\\Public\\admin\\Scripts\\LanguagePackages.ps1 -LanguageList \"Chinese (Simplified, China)\",\"Chinese (Traditional, Taiwan)\",\"Danish (Denmark)\",\"Dutch (Netherlands)\",\"English (United Kingdom)\",\"German (Germany)\",\"French (France)\",\"Italian (Italy)\",\"Japanese (Japan)\",\"Portuguese (Brazil)\",\"Spanish (Spain)\"; exit 0"
+    ],
+        },
+
         {
+          type        = "PowerShell"
+          name        = "InstallWallPaper"
+          runElevated = true
+          runAsSystem = true
+          inline = [
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/WallpaperScript.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\WallpaperScript.ps1' -UseBasicParsing",
+             "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\WallpaperScript.ps1'; exit 0"
+    ],
+        },
+              {
+          type        = "PowerShell"
+          name        = "AVDOfficeFix"
+          runElevated = true
+          runAsSystem = true
+          inline = [
+            "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/AVDOfficeFix.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\AVDOfficeFix.ps1' -UseBasicParsing",
+             "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\AVDOfficeFix.ps1'; exit 0"
+    ],
+        },
+       {
+          type           = "WindowsRestart"
+          name           = "Restart-Step1"
+          restartTimeout = "5m"
+        },
+       {
           type        = "PowerShell"
           name        = "MasterConfiguration"
           runElevated = true
@@ -112,10 +164,7 @@ resource "azapi_resource" "aib_template" {
             "Add-LocalGroupMember -Group 'FSLogix Profile Exclude List' -Member 'Administrators', 'S-1-5-113'",
             "Get-ChildItem 'C:\\Users\\Public\\admin\\Custom\\*.crt' | ForEach-Object { Import-Certificate -FilePath $_.FullName -CertStoreLocation 'Cert:\\LocalMachine\\Root' }",
             "$reg = @(",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='DesktopImageUrl'; V='C:\\Users\\Public\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImageUrl'; V='C:\\Users\\Public\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
-            "  @{ P='SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP'; N='LockScreenImage'; V='C:\\Users\\Public\\admin\\Custom\\IBKR_Desktop_Black.png'; T='String' },",
-            "  @{ P='SYSTEM\\CurrentControlSet\\Services\\wuauserv'; N='Start'; V=4; T='DWord' }",
+            "@{ P='SYSTEM\\CurrentControlSet\\Services\\wuauserv'; N='Start'; V=4; T='DWord' }",
             ")",
             "foreach ($S in $reg) { $fp = 'HKLM:\\' + $S.P; if (!(Test-Path $fp)) { New-Item $fp -Force | Out-Null }; Set-ItemProperty -Path $fp -Name $S.N -Value $S.V -Type $S.T -Force }",
             "exit 0"
@@ -204,7 +253,7 @@ resource "azapi_resource" "aib_template" {
           runAsSystem = true
           inline = [
             "Invoke-WebRequest -Uri 'https://nexus.prod.ibkr-int.com/repository/raw/ibkr/avd/aib/ConfigureSessionTimeoutsV2.ps1' -OutFile 'C:\\Users\\Public\\admin\\Scripts\\ConfigureSessionTimeouts.ps1' -UseBasicParsing",
-            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\ConfigureSessionTimeouts.ps1' -ArgumentList '-MaxDisconnectionTime 15 -MaxIdleTime 360 -MaxConnectionTime 960 -RemoteAppLogoffTimeLimit 360'; exit 0"
+            "powershell.exe -ExecutionPolicy Bypass -File 'C:\\Users\\Public\\admin\\Scripts\\ConfigureSessionTimeouts.ps1' -MaxDisconnectionTime 15 -MaxIdleTime 360 -MaxConnectionTime 960 -RemoteAppLogoffTimeLimit 360; exit 0"
           ]
         },
         {
